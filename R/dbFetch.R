@@ -40,6 +40,7 @@ NULL
   }
   df <- data.frame()
   if (!res@cursor$hasCompleted()) {
+    .trace("before fetch")
     get.response <- tryCatch(
       .fetch.uri.with.retries(res@cursor$nextUri()),
       error=function(e) {
@@ -53,15 +54,21 @@ NULL
         ))
       }
     )
+    .trace("after fetch")
 
     check.status.code(get.response)
+    .trace("before parse")
     content <- response.to.content(get.response)
+    .trace("after parse")
     if (get.state(content) == 'FAILED') {
       res@cursor$state('FAILED')
       res@cursor$stats(content[['stats']])
       stop.with.error.message(content)
     }
+    .trace("before extract")
     df <- .extract.data(content, timezone=res@session.timezone)
+    .trace("after extract")
+    .trace(paste0("df rows: ", NROW(df)))
     res@cursor$updateCursor(content, NROW(df))
   }
   return(df)

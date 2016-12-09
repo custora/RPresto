@@ -68,5 +68,6 @@ Collate:
     'src.desc.src.presto.R'
     'src.presto.R'
     'tbl.src.presto.R'
+    'trace.R'
 RoxygenNote: 5.0.1
 LinkingTo: Rcpp
