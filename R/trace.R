@@ -3,7 +3,7 @@
   if (path == "")
     return()
 
-  time <- as.integer(Sys.time())
-  line <- paste0(as.character(time), ": ", label)
+  timestamp <- format(as.numeric(Sys.time()), digits=20)
+  line <- paste0(timestamp, ": ", label)
   write(line, file=path, append=TRUE)
 }

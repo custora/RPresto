@@ -35,6 +35,7 @@ NULL
 }
 
 .fetch.single.uri <- function(res, n, ...) {
+  .trace("begin fetch.single.uri")
   if (!dbIsValid(res)) {
     stop('Result object is not valid')
   }
@@ -71,6 +72,7 @@ NULL
     .trace(paste0("df rows: ", NROW(df)))
     res@cursor$updateCursor(content, NROW(df))
   }
+  .trace("end fetch.single.uri")
   return(df)
 }
 
