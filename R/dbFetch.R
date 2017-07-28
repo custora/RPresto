@@ -95,7 +95,7 @@ NULL
   rv <- list()
   chunk.count <- 1
   while (!dbHasCompleted(result)) {
-    chunk <- dbFetch(result)
+    chunk <- .fetch.single.uri(result)
     rv[[chunk.count]] <- chunk
     chunk.count <- chunk.count + 1
   }
