@@ -47,6 +47,7 @@ NULL
 }
 
 .request.single.uri <- function(res) {
+  .trace('before request')
   get.response <- tryCatch(
     .fetch.uri.with.retries(res@cursor$nextUri()),
     error=function(e) {
@@ -62,11 +63,14 @@ NULL
   )
 
   check.status.code(get.response)
+  .trace('after request')
   return(get.response)
 }
 
 .process.single.uri <- function(res, get.response) {
+  .trace('before parse')
   content <- response.to.content(get.response)
+  .trace('after parse')
   if (get.state(content) == 'FAILED') {
     res@cursor$state('FAILED')
     res@cursor$stats(content[['stats']])
@@ -96,12 +100,16 @@ NULL
       })
   }
 
+  .trace('before extract')
   df <- .extract.data(content, timezone=res@session.timezone)
+  .trace('after extract')
+  .trace(paste0("df rows: ", NROW(df)))
   res@cursor$updateCursor(content, NROW(df))
   return(df)
 }
 
 .fetch.all <- function(result, requests.first=FALSE) {
+  .trace('before main loop')
   rv <- list()
   chunk.count <- 1
   if (requests.first) {
@@ -123,6 +131,7 @@ NULL
     }
   }
 
+  .trace('after main loop')
   if (length(rv) == 1) {
     # Preserve attributes for empty data frames
     return(rv[[1]])
