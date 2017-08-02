@@ -40,54 +40,64 @@ NULL
   }
   df <- data.frame()
   if (!res@cursor$hasCompleted()) {
-    get.response <- tryCatch(
-      .fetch.uri.with.retries(res@cursor$nextUri()),
-      error=function(e) {
-        res@cursor$state('FAILED')
-        stop(simpleError(
-          paste0(
-            'Cannot fetch ', res@cursor$nextUri(), ', ',
-            'error: ', conditionMessage(e)
-          ),
-          call='.fetch.single.uri'
-        ))
-      }
-    )
-
-    check.status.code(get.response)
-    content <- response.to.content(get.response)
-    if (get.state(content) == 'FAILED') {
-      res@cursor$state('FAILED')
-      res@cursor$stats(content[['stats']])
-      stop.with.error.message(content)
-    }
-
-    # Handle SET/RESET SESSION updates
-    if (!is.null(content[['updateType']])) {
-      switch(
-        content[['updateType']],
-        'SET SESSION' = {
-          properties <- httr::headers(get.response)[['x-presto-set-session']]
-          if (!is.null(properties)) {
-            for (pair in strsplit(properties, ',', fixed = TRUE)) {
-              pair <- unlist(strsplit(pair, '=', fixed = TRUE))
-              res@session$setParameter(pair[1], pair[2])
-            }
-          }
-        },
-        'RESET SESSION' = {
-          properties <- httr::headers(get.response)[['x-presto-clear-session']]
-          if (!is.null(properties)) {
-            for (key in strsplit(properties, ',', fixed = TRUE)) {
-              res@session$unsetParameter(key)
-            }
-          }
-        })
-    }
-
-    df <- .extract.data(content, timezone=res@session.timezone)
-    res@cursor$updateCursor(content, NROW(df))
+    get.response <- .request.single.uri(res)
+    df <- .process.single.uri(res, get.response)
   }
+  return(df)
+}
+
+.request.single.uri <- function(res) {
+  get.response <- tryCatch(
+    .fetch.uri.with.retries(res@cursor$nextUri()),
+    error=function(e) {
+      res@cursor$state('FAILED')
+      stop(simpleError(
+        paste0(
+          'Cannot fetch ', res@cursor$nextUri(), ', ',
+          'error: ', conditionMessage(e)
+        ),
+        call='.fetch.single.uri'
+      ))
+    }
+  )
+
+  check.status.code(get.response)
+  return(get.response)
+}
+
+.process.single.uri <- function(res, get.response) {
+  content <- response.to.content(get.response)
+  if (get.state(content) == 'FAILED') {
+    res@cursor$state('FAILED')
+    res@cursor$stats(content[['stats']])
+    stop.with.error.message(content)
+  }
+
+  # Handle SET/RESET SESSION updates
+  if (!is.null(content[['updateType']])) {
+    switch(
+      content[['updateType']],
+      'SET SESSION' = {
+        properties <- httr::headers(get.response)[['x-presto-set-session']]
+        if (!is.null(properties)) {
+          for (pair in strsplit(properties, ',', fixed = TRUE)) {
+            pair <- unlist(strsplit(pair, '=', fixed = TRUE))
+            res@session$setParameter(pair[1], pair[2])
+          }
+        }
+      },
+      'RESET SESSION' = {
+        properties <- httr::headers(get.response)[['x-presto-clear-session']]
+        if (!is.null(properties)) {
+          for (key in strsplit(properties, ',', fixed = TRUE)) {
+            res@session$unsetParameter(key)
+          }
+        }
+      })
+  }
+
+  df <- .extract.data(content, timezone=res@session.timezone)
+  res@cursor$updateCursor(content, NROW(df))
   return(df)
 }
 
