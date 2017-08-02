@@ -101,14 +101,28 @@ NULL
   return(df)
 }
 
-.fetch.all <- function(result) {
+.fetch.all <- function(result, requests.first=FALSE) {
   rv <- list()
   chunk.count <- 1
-  while (!dbHasCompleted(result)) {
-    chunk <- .fetch.single.uri(result)
-    rv[[chunk.count]] <- chunk
-    chunk.count <- chunk.count + 1
+  if (requests.first) {
+    while (!dbHasCompleted(result)) {
+      response <- .request.single.uri(result)
+      rv[[chunk.count]] <- response
+      chunk.count <- chunk.count + 1
+      result@cursor$sniffNextUri(response)
+    }
+
+    for (i in 1:length(rv)) {
+      rv[[i]] <- .process.single.uri(result, rv[[i]])
+    }
+  } else {
+    while (!dbHasCompleted(result)) {
+      chunk <- .fetch.single.uri(result)
+      rv[[chunk.count]] <- chunk
+      chunk.count <- chunk.count + 1
+    }
   }
+
   if (length(rv) == 1) {
     # Preserve attributes for empty data frames
     return(rv[[1]])
@@ -127,7 +141,7 @@ NULL
   }
 }
 
-.fetch.with.count <- function(res, n, ...) {
+.fetch.with.count <- function(res, n, requests.first=FALSE, ...) {
   if (!dbIsValid(res)) {
     stop('Result object is not valid')
   }
@@ -136,7 +150,7 @@ NULL
     stop('fetching custom number of rows (n != -1 and n != Inf) ',
          'is not supported, asking for: ', n)
   }
-  return(.fetch.all(res))
+  return(.fetch.all(res, requests.first=requests.first))
 }
 
 #' @rdname PrestoResult-class

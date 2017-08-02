@@ -24,6 +24,17 @@ PrestoCursor <- setRefClass('PrestoCursor',
       initFields(.fetched.row.count=as.integer(0))
       updateCursor(post.content, 0)
     },
+    sniffNextUri=function(response) {
+      text <- httr::content(response, as = "text", encoding='UTF-8')
+      match <- regexpr('"nextUri":"([^"]+)"', text, perl=TRUE)
+      if (match == -1) {
+        .uri <<- ''
+      } else {
+        start <- attr(match, 'capture.start')
+        length <- attr(match, 'capture.length')
+        .uri <<- substr(response, start, start + length - 1)
+      }
+    },
     updateCursor=function(response.content, row.count) {
 
       if (is.null(response.content[['nextUri']])) {
