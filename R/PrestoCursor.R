@@ -32,7 +32,7 @@ PrestoCursor <- setRefClass('PrestoCursor',
       } else {
         start <- attr(match, 'capture.start')
         length <- attr(match, 'capture.length')
-        .uri <<- substr(response, start, start + length - 1)
+        .uri <<- substr(text, start, start + length - 1)
       }
     },
     updateCursor=function(response.content, row.count) {
