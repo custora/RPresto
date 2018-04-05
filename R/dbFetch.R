@@ -120,8 +120,10 @@ NULL
       result@cursor$sniffNextUri(response)
     }
 
-    for (i in 1:length(rv)) {
-      rv[[i]] <- .process.single.uri(result, rv[[i]])
+    if (length(rv) > 0) {
+      for (i in 1:length(rv)) {
+        rv[[i]] <- .process.single.uri(result, rv[[i]])
+      }
     }
   } else {
     while (!dbHasCompleted(result)) {
